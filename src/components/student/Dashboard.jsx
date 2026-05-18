@@ -72,6 +72,7 @@ const statusColors = {
 };
 
 function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user"));
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -228,9 +229,9 @@ function Dashboard() {
 
           {/* Avatar */}
           <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-            {(localStorage.getItem("userName") || "U")
-              .charAt(0)
-              .toUpperCase()}
+            {(user?.fullName || "User")
+                .charAt(0)
+                .toUpperCase()}
           </div>
 
         </div>
@@ -242,7 +243,7 @@ function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
             Welcome back,{" "}
-            {localStorage.getItem("userName") || "User"}
+            {user?.fullName || "User"}
           </h1>
 
           <p className="text-gray-500 mt-1">

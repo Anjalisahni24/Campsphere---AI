@@ -20,7 +20,6 @@ const Login = () => {
     student: {
       title: "Student Login",
       color: "text-blue-600",
-      button: "bg-blue-700",
       ring: "focus-within:ring-blue-400", 
       gradient: "from-blue-100 via-blue-200 to-blue-300",
       iconBg: "bg-blue-100",
@@ -29,7 +28,6 @@ const Login = () => {
     admin: {
       title: "Admin Login",
       color: "text-red-500",
-      button: "bg-red-600",
       ring: "focus-within:ring-red-400", 
       gradient: "from-red-100 via-red-200 to-red-300",
       iconBg: "bg-red-100",
@@ -38,7 +36,6 @@ const Login = () => {
     recruiter: {
       title: "Recruiter Login",
       color: "text-green-600",
-      button: "bg-green-700",
       ring: "focus-within:ring-green-400", 
       gradient: "from-green-100 via-green-200 to-green-300",
       iconBg: "bg-green-100",
@@ -82,12 +79,19 @@ const Login = () => {
       Mode: showSignup ? "Signup" : "Login",
     });
 
-    // SAVE ROLE
-    localStorage.setItem("role", role);
-    localStorage.setItem(
-  "userName",
-  fullName || email.split("@")[0]
-);
+// SAVE USER DATA
+const userData = {
+  fullName:
+  fullName ||
+  email
+    .split("@")[0]
+    .replace(/[0-9]/g, "")
+    .replace(/[^a-zA-Z]/g, " ")
+    .trim(),
+  email: email,
+  role: role,
+};
+localStorage.setItem("user", JSON.stringify(userData));
 
     // SUCCESS ALERT
     alert(
