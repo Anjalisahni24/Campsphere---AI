@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAMSPHER-AI Resume Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-area.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .or-divider {
+            margin: 20px 0;
+            color: #888;
+            position: relative;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .or-divider::before { left: 0; }
+        .or-divider::after { right: 0; }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Section */
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--score-color) var(--score-deg), #e8e8e8 var(--score-deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .score-grade {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .grade-a-plus, .grade-a, .grade-a-minus { color: #27ae60; }
+        .grade-b-plus, .grade-b, .grade-b-minus { color: #3498db; }
+        .grade-c-plus, .grade-c, .grade-c-minus { color: #f39c12; }
+        .grade-d { color: #e67e22; }
+        .grade-f { color: #e74c3c; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .skill-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .skill-name {
+            width: 200px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .skill-progress {
+            flex: 1;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .skill-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.8s ease;
+        }
+
+        .skill-score {
+            width: 50px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .recommendation {
+            background: #fff8e6;
+            border-left: 4px solid #f39c12;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .recommendation.high {
+            background: #fdeaea;
+            border-left-color: #e74c3c;
+        }
+
+        .recommendation.medium {
+            background: #fff8e6;
+            border-left-color: #f39c12;
+        }
+
+        .recommendation.low {
+            background: #e8f8e8;
+            border-left-color: #27ae60;
+        }
+
+        .rec-priority {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .rec-category {
+            font-weight: bold;
+            color: #444;
+        }
+
+        .rec-action {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .category-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+
+        .category-name {
+            font-size: 14px;
+            color: #444;
+        }
+
+        .category-score {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .api-config {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .api-config label {
+            font-size: 14px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .api-config input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fdeaea;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .skill-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .skill-tag.demand {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .skill-name {
+                width: 120px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CAMSPHER-AI</h1>
+            <p>AI-Powered Resume Analyzer for Smart College Placement</p>
+        </div>
+
+        <div class="card">
+            <div class="api-config">
+                <label>API Server URL:</label>
+                <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('file')">Upload File</div>
+                <div class="tab" onclick="switchTab('text')">Paste Text</div>
+            </div>
+
+            <!-- File Upload Tab -->
+            <div id="fileTab" class="tab-content active">
+                <div class="upload-section">
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()" 
+                         ondrop="dropHandler(event)" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)"
+                         id="dropZone">
+                        <div class="upload-icon">&#128193;</div>
+                        <p><strong>Click to upload</strong> or drag and drop</p>
+                        <p style="color: #888; font-size: 13px; margin-top: 8px;">PDF, DOCX (Max 10MB)</p>
+                        <p id="fileName" style="color: #667eea; margin-top: 10px; font-weight: bold;"></p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc" onchange="handleFileSelect(event)">
+                </div>
+            </div>
+
+            <!-- Text Tab -->
+            <div id="textTab" class="tab-content">
+                <textarea id="resumeText" placeholder="Paste your resume text here..."></textarea>
+            </div>
+
+            <div id="errorMsg"></div>
+
+            <center>
+                <button class="btn" id="analyzeBtn" onclick="analyzeResume()">
+                    <span id="btnText">Analyze Resume</span>
+                </button>
+            </center>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="results">
+            <div class="card">
+                <div class="score-circle" id="scoreCircle">
+                    <span class="score-value" id="scoreValue">0</span>
+                </div>
+                <div class="score-grade" id="scoreGrade">-</div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalSkills">0</div>
+                        <div class="stat-label">Total Skills</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="techSkills">0</div>
+                        <div class="stat-label">Technical</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="demandSkills">0</div>
+                        <div class="stat-label">High-Demand</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="projectsCount">0</div>
+                        <div class="stat-label">Projects</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="expCount">0</div>
+                        <div class="stat-label">Experience</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="gradeValue">-</div>
+                        <div class="stat-label">Grade</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Category Scores</div>
+                <div class="category-scores" id="categoryScores"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Top Skills by Strength</div>
+                <div id="topSkills"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Skills Detected</div>
+                <div id="allSkills" class="skills-grid"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">High-Demand Skills Matched</div>
+                <div id="demandSkillsList" class="skills-grid"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Recommendations</div>
+                <div id="recommendations"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Experience</div>
+                <div id="experienceList"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Projects</div>
+                <div id="projectsList"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Education</div>
+                <div id="educationList"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Raw Response</div>
+                <pre id="rawJson" style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // TAB SWITCHING
+        // ========================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'file') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('fileTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            }
+        }
+
+        // ========================================
+        // FILE UPLOAD
+        // ========================================
+        let selectedFile = null;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+            }
+        }
+
+        function dropHandler(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.remove('active');
+            const file = event.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.pdf') || file.name.endsWith('.docx') || file.name.endsWith('.doc'))) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+            }
+        }
+
+        function dragOverHandler(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.add('active');
+        }
+
+        function dragLeaveHandler(event) {
+            event.preventDefault();
+            document.getElementById('dropZone').classList.remove('active');
+        }
+
+        // ========================================
+        // ANALYZE RESUME
+        // ========================================
+        async function analyzeResume() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const isFileTab = document.getElementById('fileTab').classList.contains('active');
+            
+            // Reset
+            document.getElementById('errorMsg').innerHTML = '';
+            
+            // Loading state
+            const btn = document.getElementById('analyzeBtn');
+            const btnText = document.getElementById('btnText');
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span> Analyzing...';
+
+            try {
+                let response;
+                
+                if (isFileTab) {
+                    if (!selectedFile) {
+                        throw new Error('Please select a file');
+                    }
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    
+                    response = await fetch(`${apiUrl}/api/analyze/file`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                } else {
+                    const text = document.getElementById('resumeText').value.trim();
+                    if (!text) {
+                        throw new Error('Please paste your resume text');
+                    }
+                    
+                    response = await fetch(`${apiUrl}/api/analyze/text`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ resume_text: text }),
+                    });
+                }
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                document.getElementById('errorMsg').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Analyze Resume';
+            }
+        }
+
+        // ========================================
+        // DISPLAY RESULTS
+        // ========================================
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const summary = data.summary;
+            const analysis = data.analysis;
+            const scoring = analysis.scoring;
+
+            // Show results
+            results.classList.add('show');
+
+            // Score circle
+            const score = summary.overall_score;
+            const deg = (score / 100) * 360;
+            let scoreColor = '#e74c3c';
+            if (score >= 80) scoreColor = '#27ae60';
+            else if (score >= 65) scoreColor = '#3498db';
+            else if (score >= 50) scoreColor = '#f39c12';
+            
+            document.getElementById('scoreCircle').style.setProperty('--score-color', scoreColor);
+            document.getElementById('scoreCircle').style.setProperty('--score-deg', deg + 'deg');
+            document.getElementById('scoreValue').textContent = score;
+
+            // Grade
+            const grade = summary.grade;
+            const gradeEl = document.getElementById('scoreGrade');
+            gradeEl.textContent = `Grade: ${grade}`;
+            gradeEl.className = 'score-grade grade-' + grade.toLowerCase().replace('+', '-plus').replace('-', '-minus');
+
+            // Stats
+            document.getElementById('totalSkills').textContent = summary.total_skills;
+            document.getElementById('techSkills').textContent = summary.technical_skills;
+            document.getElementById('demandSkills').textContent = summary.high_demand_skills;
+            document.getElementById('projectsCount').textContent = summary.projects_count;
+            document.getElementById('expCount').textContent = summary.experience_count;
+            document.getElementById('gradeValue').textContent = grade;
+
+            // Category Scores
+            const catContainer = document.getElementById('categoryScores');
+            catContainer.innerHTML = '';
+            for (const [cat, score] of Object.entries(scoring.category_scores)) {
+                catContainer.innerHTML += `
+                    <div class="category-item">
+                        <span class="category-name">${cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        <span class="category-score">${score}</span>
+                    </div>
+                `;
+            }
+
+            // Top Skills
+            const skillsContainer = document.getElementById('topSkills');
+            skillsContainer.innerHTML = '';
+            const sortedSkills = Object.entries(analysis.skills.skill_strengths)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            for (const [skill, strength] of sortedSkills) {
+                skillsContainer.innerHTML += `
+                    <div class="skill-bar">
+                        <span class="skill-name">${skill}</span>
+                        <div class="skill-progress">
+                            <div class="skill-fill" style="width: ${strength}%"></div>
+                        </div>
+                        <span class="skill-score">${strength.toFixed(1)}</span>
+                    </div>
+                `;
+            }
+
+            // All Skills
+            const allSkillsContainer = document.getElementById('allSkills');
+            allSkillsContainer.innerHTML = '';
+            for (const skill of analysis.skills.found_skills.slice(0, 50)) {
+                allSkillsContainer.innerHTML += `<span class="skill-tag">${skill}</span>`;
+            }
+
+            // High-Demand Skills
+            const demandContainer = document.getElementById('demandSkillsList');
+            demandContainer.innerHTML = '';
+            for (const skill of analysis.skills.high_demand_matches) {
+                demandContainer.innerHTML += `<span class="skill-tag demand">${skill}</span>`;
+            }
+
+            // Recommendations
+            const recContainer = document.getElementById('recommendations');
+            recContainer.innerHTML = '';
+            for (const rec of scoring.recommendations) {
+                recContainer.innerHTML += `
+                    <div class="recommendation ${rec.priority}">
+                        <div class="rec-priority">${rec.priority.toUpperCase()}</div>
+                        <span class="rec-category">[${rec.category}]</span> ${rec.issue}
+                        <div class="rec-action">${rec.action}</div>
+                    </div>
+                `;
+            }
+
+            // Experience
+            const expContainer = document.getElementById('experienceList');
+            expContainer.innerHTML = '';
+            for (const exp of analysis.content.experience) {
+                expContainer.innerHTML += `
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f8f9ff; border-radius: 8px;">
+                        <b>${exp.title || 'N/A'}</b> at ${exp.company || 'N/A'}<br>
+                        <small style="color: #888;">${exp.duration || 'N/A'}</small><br>
+                        <p style="margin-top: 5px; font-size: 13px;">${exp.description ? exp.description.substring(0, 150) + '...' : ''}</p>
+                    </div>
+                `;
+            }
+
+            // Projects
+            const projContainer = document.getElementById('projectsList');
+            projContainer.innerHTML = '';
+            for (const proj of analysis.content.projects.slice(0, 5)) {
+                projContainer.innerHTML += `
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f8f9ff; border-radius: 8px;">
+                        <b>${proj.name || 'Unnamed Project'}</b><br>
+                        <small style="color: #888;">${proj.technologies ? proj.technologies.join(', ') : ''}</small><br>
+                        <p style="margin-top: 5px; font-size: 13px;">${proj.description ? proj.description.substring(0, 150) + '...' : ''}</p>
+                    </div>
+                `;
+            }
+
+            // Education
+            const eduContainer = document.getElementById('educationList');
+            eduContainer.innerHTML = '';
+            for (const edu of analysis.content.education) {
+                eduContainer.innerHTML += `
+                    <div style="margin-bottom: 10px; padding: 10px; background: #f8f9ff; border-radius: 8px;">
+                        <b>${edu.degree || 'N/A'}</b><br>
+                        ${edu.institution || 'Unknown Institution'}<br>
+                        <small style="color: #888;">Grade: ${edu.grade || 'N/A'} | ${edu.duration || 'N/A'}</small>
+                    </div>
+                `;
+            }
+
+            // Raw JSON
+            document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
