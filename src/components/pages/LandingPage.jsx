@@ -150,7 +150,7 @@ const stories = [
     
          <button
             onClick={() => navigate("/help")}
-            className="bg-[#1d4ed8] hover:bg-black text- px-8 py-3 rounded-xl font-semibold transition"
+            className="bg-[#1d4ed8] hover:bg-black text-white px-8 py-3 rounded-xl font-semibold transition"
           >
             Get Support
           </button>

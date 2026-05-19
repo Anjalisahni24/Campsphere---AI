@@ -113,8 +113,8 @@ function Profile() {
   }
 
   return (
-    <div className="flex-1 min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="w-full space-y-6">
+    <div className="flex-1 min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8 opacity-100">
+      <div className="w-full max-w-none space-y-6 opacity-100">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -129,13 +129,13 @@ function Profile() {
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
-                className="flex items-center gap-1 px-3 py-1 border rounded"
+                className="flex items-center gap-1 px-4 py-2 border border-gray-300 bg-white rounded-lg"
               >
                 <X size={14} /> Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded"
+                className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow"
               >
                 <Check size={14} /> Save
               </button>
@@ -143,7 +143,7 @@ function Profile() {
           ) : (
             <button
               onClick={() => setEditing(true)}
-              className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-grey-100 rounded"
+              className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded"
             >
               <Edit2 size={14} /> Edit
             </button>
@@ -151,7 +151,7 @@ function Profile() {
         </div>
 
         {/* PROFILE CARD */}
-        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+        <div className="w-full bg-white rounded-xl shadow p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row gap-4">
 
             {/* Avatar */}
@@ -234,7 +234,7 @@ function Profile() {
         </div>
 
         {/* EDUCATION */}
-        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+        <div className="w-full bg-white rounded-xl shadow p-4 sm:p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <GraduationCap size={18} /> Education
           </h3>
@@ -273,7 +273,7 @@ function Profile() {
         </div>
 
         {/* SKILLS */}
-        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+        <div className="w-full bg-white rounded-xl shadow p-4 sm:p-6">
           <h3 className="font-semibold mb-4">Skills</h3>
 
           <div className="flex flex-wrap gap-2">
@@ -314,7 +314,7 @@ function Profile() {
         </div>
 
         {/* PROJECTS */}
-        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+        <div className="w-full bg-white rounded-xl shadow p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
 
             <h3 className="font-semibold">

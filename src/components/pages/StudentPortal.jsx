@@ -9,11 +9,11 @@ import Sidebar from "../common/Sidebar";
 
 function StudentPortal() {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex h-screen w-screen overflow-hidden">
 
       <Sidebar />
       
-      <div className="w-full min-h-screen p-4 md:p-6 lg:p-8 space-y-5 min-h-screen bg-gradient-to-br from-[#eef2ff] via-white to-[#f8fafc] dark:from-[#0f172a] dark:to-[#020617] transition">
+      <div className="flex-1 w-full overflow-y-auto p-4 md:p-6 lg:p-8 bg-gradient-to-br from-[#eef2ff] via-white to-[#f8fafc] dark:from-[#0f172a] dark:to-[#020617] transition">
 
         <Routes>
           <Route path="/" element={<Dashboard />} />

@@ -37,26 +37,29 @@ const Header = () => {
   const tabs = ["Network", "Insights", "Calendar"];
   const [active, setActive] = useState("Network");
 
-return (
-  <div className="bg-white rounded-2xl border shadow-sm px-4 md:px-6 py-4">
+  return (
+    <div className="bg-white rounded-2xl border shadow-sm px-4 md:px-6 py-4">
 
-    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
 
-      {/* LEFT */}
-      <h2 className="text-base md:text-lg font-semibold text-gray-800">
-        Placement Intelligence Center
-      </h2>
+        {/* LEFT */}
+        <h2 className="text-base md:text-lg font-semibold text-gray-800">
+          Placement Intelligence Center
+        </h2>
 
-      {/* RIGHT */}
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-        {(localStorage.getItem("userName") || "U")
-          .charAt(0)
-          .toUpperCase()}
+        {/* RIGHT */}
+        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer shrink-0">
+          {(
+            JSON.parse(localStorage.getItem("user"))?.fullName ||
+            "User"
+          )
+            .charAt(0)
+            .toUpperCase()}
+        </div>
+
       </div>
-
     </div>
-  </div>
-);
+  );
 };
 
 /* STATS */
@@ -64,7 +67,7 @@ return (
 const PlacementStats = () => (
   <Card>
     <div className="flex items-start justify-between">
-      
+
       <div className="w-11 h-11 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
         <TrendingUp className="text-blue-600" />
       </div>
@@ -297,7 +300,7 @@ const CompanyTrends = () => (
         >
 
           <div className="flex items-start justify-between gap-3">
-            
+
             <div className="min-w-0">
               <h4 className="font-semibold truncate">
                 {company.name}

@@ -36,12 +36,6 @@ const ReadinessChart = ({ value }) => (
   </div>
 );
 
-const skills = [
-  { label: "Frontend Development", value: 92 },
-  { label: "Data Science & NLP", value: 78 },
-  { label: "Problem Solving", value: 85 },
-];
-
 function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -53,19 +47,49 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   const [resumeData, setResumeData] = useState(null);
+  const dynamicSkills = resumeData
+    ? resumeData.analysis.skills.found_skills
+      .slice(0, 5)
+      .map((skill, index) => ({
+        label: skill,
+        value: 90 - index * 10,
+      }))
+    : [
+      {
+        label: "Frontend Development",
+        value: 92,
+      },
+      {
+        label: "Data Science & NLP",
+        value: 78,
+      },
+      {
+        label: "Problem Solving",
+        value: 85,
+      },
+    ];
 
   const notifications = [
+
     resumeData
       ? `Resume score: ${resumeData.summary.overall_score}`
       : "Upload resume for AI analysis",
 
     resumeData
-      ? `${resumeData.summary.total_skills} skills detected`
+      ? `${resumeData.summary.total_skills} AI skills detected`
       : "No resume analyzed yet",
 
     savedProfile.projects?.length
       ? `${savedProfile.projects.length} projects added`
       : "No projects added yet",
+
+    savedProfile.skills?.length
+      ? `${savedProfile.skills.length} profile skills updated`
+      : "Add skills to improve recommendations",
+
+    readiness >= 80
+      ? "You are placement ready"
+      : "Improve profile to increase readiness",
   ];
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -199,15 +223,31 @@ function Dashboard() {
             {showSettings && (
               <div className="absolute right-0 mt-2 w-56 bg-white border rounded-2xl shadow-lg p-2 z-50">
 
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                <button
+                  onClick={() =>
+                    navigate("/student-dashboard/profile")
+                  }
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                >
                   Profile Settings
                 </button>
 
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                  Dashboard Preferences
+                <button
+                  onClick={() =>
+                    navigate("/student-dashboard/readiness-score")
+                  }
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                >
+                  Readiness Analytics
                 </button>
 
-                <button className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-red-500">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("user");
+                    navigate("/login");
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-red-500"
+                >
                   Logout
                 </button>
 
@@ -432,7 +472,7 @@ function Dashboard() {
           Skill Analysis
         </h3>
 
-        {skills.map((skill) => (
+        {dynamicSkills.map((skill) => (
           <div key={skill.label} className="mb-4">
 
             <div className="flex justify-between text-sm mb-1">
