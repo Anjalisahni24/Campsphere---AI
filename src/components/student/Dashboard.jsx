@@ -76,35 +76,34 @@ function Dashboard() {
   const atsScore = getAtsScore();
   const placementProb = prediction?.selection_probability;
 
-  const dynamicSkills = resumeData
+  const allSkills = resumeData?.analysis?.skills?.found_skills?.length
     ? resumeData.analysis.skills.found_skills
-      .slice(0, 5)
-      .map((skill, index) => ({
-        label: skill,
-        value: 90 - index * 10,
-      }))
-    : [
-      {
-        label: "Frontend Development",
-        value: 92,
-      },
-      {
-        label: "Data Science & NLP",
-        value: 78,
-      },
-      {
-        label: "Problem Solving",
-        value: 85,
-      },
-    ];
+    : savedProfile.skills || [];
+
+  const dynamicSkills = allSkills.slice(0, 6).map((skill, index) => ({
+    label: skill,
+
+    value: Math.max(
+      60,
+      Math.min(
+        95,
+        Math.round(
+          readinessScore -
+          index * 4 +
+          Math.random() * 8
+        )
+      )
+    ),
+  }));
+
 
   const scoreChartData = resumeData?.analysis?.scoring?.category_scores
     ? Object.entries(resumeData.analysis.scoring.category_scores).map(
-        ([key, value]) => ({
-          name: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          score: Math.round(value),
-        })
-      )
+      ([key, value]) => ({
+        name: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        score: Math.round(value),
+      })
+    )
     : [];
 
   const notifications = [
@@ -313,9 +312,8 @@ function Dashboard() {
         </div>
 
         <div
-          className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-2 border-dashed rounded-xl p-4 transition ${
-            dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-          }`}
+          className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-2 border-dashed rounded-xl p-4 transition ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
+            }`}
           onDragOver={(e) => {
             e.preventDefault();
             setDragOver(true);
@@ -603,26 +601,35 @@ function Dashboard() {
           Skill Analysis
         </h3>
 
-        {dynamicSkills.map((skill) => (
-          <div key={skill.label} className="mb-4">
+        {dynamicSkills.length === 0 ? (
 
-            <div className="flex justify-between text-sm mb-1">
-              <span>{skill.label}</span>
-              <span>{skill.value}%</span>
+          <p className="text-sm text-gray-500">
+            Upload resume or add skills in profile
+          </p>
+
+        ) : (
+
+          dynamicSkills.map((skill) => (
+            <div key={skill.label} className="mb-4">
+
+              <div className="flex justify-between text-sm mb-1">
+                <span>{skill.label}</span>
+                <span>{skill.value}%</span>
+              </div>
+
+              <div className="bg-gray-200 h-2 rounded-full">
+
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{
+                    width: `${skill.value}%`,
+                  }}
+                />
+
+              </div>
             </div>
-
-            <div className="bg-gray-200 h-2 rounded-full">
-
-              <div
-                className="bg-blue-500 h-2 rounded-full"
-                style={{
-                  width: `${skill.value}%`,
-                }}
-              />
-
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Bottom */}
@@ -632,12 +639,14 @@ function Dashboard() {
         <div className="md:col-span-3 bg-white p-5 rounded-2xl shadow border">
 
           <h3 className="font-semibold mb-4">
-            Applications
+            Applied Jobs
           </h3>
-          {savedProfile.projects?.length > 0 ? (
+          {jobData?.top_recommendations?.length > 0 ? (
 
-            savedProfile.projects.map(
-              (project, index) => (
+            jobData.top_recommendations.slice(0, 4).map((rec, index) => {
+              const job = rec.job || {};
+
+              return (
                 <div
                   key={index}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition"
@@ -647,31 +656,31 @@ function Dashboard() {
                   <div className="flex-1">
 
                     <p className="font-semibold text-sm">
-                      {project.title || "Untitled Project"}
+                      {job.title || "Job Role"}
                     </p>
 
                     <p className="text-xs text-gray-500">
-                      {project.description ||
-                        "No description"}
+                      {job.company || "Company"}
                     </p>
 
                   </div>
 
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                    PROJECT
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                    APPLIED
                   </span>
                 </div>
-              )
-            )
+              );
+            })
 
           ) : (
 
             <p className="text-sm text-gray-500">
-              No projects added yet
+              No job applications yet
             </p>
 
           )}
         </div>
+
 
         {/* Upcoming */}
         <div className="md:col-span-2 space-y-3">
