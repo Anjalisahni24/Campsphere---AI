@@ -67,27 +67,35 @@ async function request(endpoint, options = {}) {
     config.data = typeof body === "string" ? JSON.parse(body) : body;
     config.headers = { "Content-Type": "application/json", ...config.headers };
   }
-  const { data } = await api.request(config);
-  return data;
+  console.log(`[FRONTEND] Sending request to ${endpoint}`, config.data || "");
+  try {
+    const { data } = await api.request(config);
+    console.log(`[FRONTEND] Response received from ${endpoint}`, data);
+    return data;
+  } catch (error) {
+    console.error(`[FRONTEND] Error from ${endpoint}`, error);
+    throw error;
+  }
 }
 
 /** Upload resume with progress; do not set Content-Type (axios sets multipart boundary). */
 async function uploadWithProgress(endpoint, formData, onProgress) {
-  if (import.meta.env.DEV) {
-    console.log("[API] Uploading file to", `${API_BASE}${endpoint}`);
+  console.log(`[FRONTEND] Sending upload request to ${endpoint}`);
+  try {
+    const { data } = await api.post(endpoint, formData, {
+      timeout: 300000,
+      onUploadProgress: (event) => {
+        if (onProgress && event.total) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      },
+    });
+    console.log(`[FRONTEND] Upload response received from ${endpoint}`, data);
+    return data;
+  } catch (error) {
+    console.error(`[FRONTEND] Upload error from ${endpoint}`, error);
+    throw error;
   }
-  const { data } = await api.post(endpoint, formData, {
-    timeout: 300000,
-    onUploadProgress: (event) => {
-      if (onProgress && event.total) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    },
-  });
-  if (import.meta.env.DEV) {
-    console.log("[API] Upload response", data?.success, data?.extraction?.extraction_method_used);
-  }
-  return data;
 }
 
 // ─── Profile helpers ─────────────────────────────────────────────────────────

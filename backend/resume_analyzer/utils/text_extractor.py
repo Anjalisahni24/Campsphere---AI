@@ -317,11 +317,13 @@ class TextExtractor:
     # ── DOCX ──────────────────────────────────────────────────────────────────
 
     def _extract_docx_pipeline(
-        self, file_content: bytes, warnings: List[str]
+        self, file_content: bytes, warnings: List[str], called_from_fallback: bool = False
     ) -> Tuple[str, str, float]:
         if not PYTHON_DOCX_AVAILABLE:
             warnings.append("python-docx not installed")
-            return self._extract_doc_as_zip_fallback(file_content)
+            if called_from_fallback:
+                return "", "docx_failed", 0.0
+            return self._extract_doc_as_zip_fallback(file_content, warnings)
 
         try:
             doc = Document(io.BytesIO(file_content))
@@ -348,12 +350,18 @@ class TextExtractor:
             conf = min(95.0, 60.0 + len(text) / 40.0) if text else 0.0
             return text, "python-docx", conf
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             warnings.append(f"docx: {e}")
-            return self._extract_doc_as_zip_fallback(file_content)
+            if called_from_fallback:
+                return "", "docx_failed", 0.0
+            return self._extract_doc_as_zip_fallback(file_content, warnings)
 
-    def _extract_doc_as_zip_fallback(self, file_content: bytes) -> Tuple[str, str, float]:
+    def _extract_doc_as_zip_fallback(self, file_content: bytes, warnings: List[str] = None) -> Tuple[str, str, float]:
+        if warnings is None:
+            warnings = []
         if file_content[:2] == b"PK":
-            return self._extract_docx_pipeline(file_content, [])
+            return self._extract_docx_pipeline(file_content, warnings, called_from_fallback=True)
         return "", "docx_failed", 0.0
 
     # ── DOC ───────────────────────────────────────────────────────────────────

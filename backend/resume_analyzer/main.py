@@ -397,7 +397,7 @@ async def analyze_file(
     start_time = time.time()
 
     try:
-        print(f"[analyze/file] Request received: {file.filename} ({file.content_type})")
+        print(f"[backend] Request received: {file.filename}")
         contents = await file.read()
         _validate_upload(file, contents)
         print(f"[analyze/file] Analysis started ({len(contents)} bytes)")
@@ -406,6 +406,9 @@ async def analyze_file(
             file.filename,
             content_type=file.content_type,
         )
+        extracted_text_len = result.get("analysis", {}).get("text_stats", {}).get("character_count", 0)
+        print(f"[backend] Extracted text length: {extracted_text_len}")
+        print(f"[backend] Analysis output: {result}")
         result["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
         return result
     except HTTPException:
