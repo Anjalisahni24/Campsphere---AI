@@ -1,7 +1,7 @@
 """
 CAMSPHER-AI Smart Placement API — v4.0.0
 FastAPI Backend with all 4 models integrated.
-
+models :
 Model 1: Resume Analyzer      — NLP: TF-IDF + NER + Keyword Matching
 Model 2: Job Recommender      — Content-based: Cosine Similarity
 Model 3: Selection Predictor  — ML: Logistic Regression + Random Forest + Decision Tree
