@@ -573,7 +573,12 @@ function Dashboard() {
 
           <div className="mt-2">
             <span className="text-4xl font-bold">
-              {savedProfile.cgpa || "Not added"}
+              {
+              resumeData?.analysis?.education?.[0]?.cgpa ||
+              resumeData?.extraction?.cgpa ||
+              savedProfile?.cgpa ||
+              "Not added"
+              }
             </span>
 
             <span className="text-sm text-gray-500 ml-1">
@@ -591,16 +596,34 @@ function Dashboard() {
           </div>
 
           <div className="flex flex-wrap gap-2 mt-3">
-            {savedProfile.skills?.length > 0 ? (
+            {allSkills.length > 0 ? (
 
-              savedProfile.skills.map((skill) => (
-                <Badge
-                  key={skill}
-                  className="bg-gray-100"
-                >
-                  {skill}
-                </Badge>
-              ))
+            allSkills
+            .filter(skill => skill.length > 3)
+            .filter(skill =>
+            ![
+              "organization",
+              "legal",
+              "medical",
+              "communication",
+              "cross-functional",
+              "benchmarking",
+              "support",
+              "work"
+            ].includes(skill.toLowerCase())
+            )
+            .slice(0,10).map((skill) => (
+
+            <Badge
+                key={skill}
+                className="bg-gray-100"
+            >
+                {skill}
+            </Badge>
+
+            ))
+
+            
 
             ) : (
 

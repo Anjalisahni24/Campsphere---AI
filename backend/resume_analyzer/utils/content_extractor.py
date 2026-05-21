@@ -186,19 +186,52 @@ class ContentExtractor:
         return sections
 
     def _extract_projects(self, text: str) -> List[Dict]:
-        """Extract project information."""
-        projects = []
+        """Extract project information correctly."""
+        projects=[]
+
         if not text.strip():
             return projects
 
-        # Split by common project delimiters
-        project_blocks = re.split(r'\n(?=(?:•|\*|\-|\d+\.|[A-Z][a-zA-Z0-9\s]+:?))', text)
+        PROJECT_HEADER_PATTERN = re.compile(
+            r'^[A-Z][A-Za-z0-9\s\-]+?\s*\|\s*.*$'
+        )
 
-        for block in project_blocks:
-            if not block.strip() or len(block.strip()) < 20:
+        lines=[x.strip() for x in text.split("\n") if x.strip()]
+
+        current_block=[]
+
+        blocks=[]
+
+        for line in lines:
+
+            # New project starts only on:
+            # ResQ Audio | Kotlin, Android...
+            # AlzGuardAI | React, Flask...
+            if PROJECT_HEADER_PATTERN.match(line):
+
+                if current_block:
+                    blocks.append(
+                        "\n".join(current_block)
+                    )
+
+                current_block=[line]
+
+            else:
+
+                current_block.append(line)
+
+        if current_block:
+            blocks.append(
+                "\n".join(current_block)
+            )
+
+        for block in blocks:
+
+            if len(block)<40:
                 continue
 
-            project = self._parse_project_block(block)
+            project=self._parse_project_block(block)
+
             if project:
                 projects.append(project)
 
