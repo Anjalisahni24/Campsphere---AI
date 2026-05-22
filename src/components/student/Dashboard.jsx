@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import { usePlacement } from "../context/PlacementContext";
 import toast from "react-hot-toast";
+import ThemeToggle from "../common/ThemeToggle";
 
 /* Badge */
 const Badge = ({ children, className = "" }) => (
@@ -191,7 +192,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-6 space-y-5 bg-gradient-to-br from-[#eef2ff] via-white to-[#f8fafc]">
+    <div className="min-h-screen p-6 space-y-5 bg-gradient-to-br from-[#eef2ff]">
 
       {/* HEADER */}
       <div className="bg-white border rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
@@ -270,6 +271,17 @@ function Dashboard() {
                 >
                   Readiness Analytics
                 </button>
+
+                {/* DARK MODE */}
+                <div className="flex items-center justify-between px-3 py-2">
+
+                  <p className="text-sm">
+                    Dark Mode
+                  </p>
+
+                  <ThemeToggle />
+
+                </div>
 
                 <button
                   onClick={() => {

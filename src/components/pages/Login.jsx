@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Briefcase, Building2 } from "lucide-react";
 
 const Login = () => {
   const [fullName, setFullName] = useState("");
@@ -8,6 +8,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [collegeName, setCollegeName] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,10 +91,43 @@ const Login = () => {
           .replace(/[^a-zA-Z]/g, " ")
           .replace(/\s+/g, " ")
           .trim(),
+
       email: email,
+      password: password,
       role: role,
+      companyName: role === "recruiter" ? companyName : "",
+      collegeName: role === "admin" ? collegeName : "",
     };
-    localStorage.setItem("user", JSON.stringify(userData));
+
+    const existingUser = localStorage.getItem(email);
+
+    if (showSignup && existingUser) {
+      alert("Account already exists");
+      return;
+    }
+
+    if (showSignup) {
+      localStorage.setItem(email, JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
+    if (!showSignup) {
+      const existingUser = localStorage.getItem(email);
+
+      if (!existingUser) {
+        alert("Account not found. Please sign up first.");
+        return;
+      }
+
+      const parsedUser = JSON.parse(existingUser);
+
+      if (parsedUser.password !== password) {
+        alert("Incorrect password");
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(parsedUser));
+    }
+
 
     // SUCCESS ALERT
     alert(
@@ -157,6 +192,37 @@ const Login = () => {
           </div>
         )}
 
+        {showSignup && role === "recruiter" && (
+          <div
+            className={`flex items-center border rounded-lg px-3 mb-4 focus-within:ring-2 ${current.ring}`}
+          >
+            <Briefcase className="text-gray-400 w-5" />
+
+            <input
+              type="text"
+              placeholder="Company Name"
+              className="w-full p-3 outline-none text-sm sm:text-base"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
+          </div>
+        )}
+
+        {showSignup && role === "admin" && (
+          <div
+            className={`flex items-center border rounded-lg px-3 mb-4 focus-within:ring-2 ${current.ring}`}
+          >
+            <Building2 className="text-gray-400 w-5" />
+
+            <input
+              type="text"
+              placeholder="College Name"
+              className="w-full p-3 outline-none text-sm sm:text-base"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+            />
+          </div>
+        )}
         {/* EMAIL */}
         <div className={`flex items-center border rounded-lg px-3 mb-4 focus-within:ring-2 ${current.ring}`}>
           <Mail className="text-gray-400 w-5" />
