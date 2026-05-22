@@ -4,14 +4,6 @@ Skills Extractor Module - NLP-based skills extraction using:
 - Keyword matching with comprehensive skills database
 - Named Entity Recognition (NER) via spaCy
 - TF-IDF vectorization for skill importance ranking
-
-v1.1.0 — Bug fixes (all original logic preserved):
-  FIX 1 [Line 394]: tfidf default changed 0.5 → 0.0 (was inflating all scores)
-  FIX 2 [Line 397]: demand_mult normalized 1.5/1.0 → 1.0/0.4 (was dominating formula)
-  FIX 3 [Lines 404-410]: category_weight normalized 1.0-1.2 → 1.0/0.85/0.70 (same issue)
-  FIX 4 [Line 421]: removed max(40,...) floor (was giving every skill min 40/100)
-  FIX 5 [Line 311]: O(n²) feature_names.index() → O(1) dict lookup
-  FIX 6 [Line 446]: diversity base_score log10 → linear (log10 was unreachable)
 """
 
 import re
@@ -139,20 +131,84 @@ class SkillsExtractor:
             key=lambda x: x["score"],
             reverse=True
         )[:15]
+        # Remove noisy skills
+        STOP_SKILLS = {
+            "team",
+            "teams",
+            "project",
+            "projects",
+            "work",
+            "lead",
+            "leader",
+            "support",
+            "analysis",
+            "development",
+            "management",
+            "communication",
+            "organization",
+            "benchmarking",
+            "medical",
+            "legal",
+            "production",
+            "risk analysis",
+            "cross-functional",
+            "monitoring",
+            "cam"
+        }
+
+        cleaned_skills = []
+
+        for s in found_skills:
+
+            s = s.lower().strip()
+
+            if len(s) <= 2:
+                continue
+
+            if s in STOP_SKILLS:
+                continue
+            # remove one-word generic business terms
+            if len(s.split()) == 1 and s not in self.high_demand_skills:
+                if s not in {
+                    "python",
+                    "react",
+                    "docker",
+                    "mongodb",
+                    "tensorflow",
+                    "flask",
+                    "fastapi",
+                    "sql",
+                    "git",
+                    "github",
+                    "numpy",
+                    "pandas",
+                    "kotlin",
+                    "javascript",
+                    "redis",
+                    "mysql",
+                    "android"
+                }:
+                    continue
+            cleaned_skills.append(s)
+
+        cleaned_skills = sorted(
+            list(set(cleaned_skills))
+        )
 
         return {
-            "found_skills": sorted(list(found_skills)),
+            "found_skills": cleaned_skills,
             "skill_categories": categorized,
             "skill_strengths": skill_strengths,
             "high_demand_matches": sorted(high_demand_matches),
-            "total_skills": len(found_skills),
+            "total_skills": len(cleaned_skills),
             "technical_count": len(categorized["technical"]),
             "soft_count": len(categorized["soft"]),
             "domain_count": len(categorized["domain"]),
             "skill_diversity_score": round(diversity_score, 2),
-            "ner_entities": ner_entities[:20],  # Limit NER output
+            "ner_entities": ner_entities[:20],
             "tfidf_top_skills": tfidf_top,
         }
+    
 
     def _normalize_text(self, text: str) -> str:
         """Normalize text for better matching."""
@@ -170,10 +226,46 @@ class SkillsExtractor:
         found = set()
         text_to_search = clean_text + " " + original_text.lower()
 
+        ALLOWED_SINGLE_WORD_SKILLS = {
+            "python",
+            "java",
+            "react",
+            "docker",
+            "mongodb",
+            "tensorflow",
+            "flask",
+            "fastapi",
+            "sql",
+            "git",
+            "github",
+            "numpy",
+            "pandas",
+            "kotlin",
+            "javascript",
+            "redis",
+            "mysql",
+            "android",
+            "aws",
+            "django",
+            "nodejs",
+            "c++",
+            "html",
+            "css"
+        }
+
         for skill, pattern in self.skill_patterns.items():
+
+            skill = skill.lower().strip()
+
             if pattern.search(text_to_search):
-                # Resolve to canonical form
+
+                # filter random one-word terms
+                if len(skill.split()) == 1:
+                    if skill not in ALLOWED_SINGLE_WORD_SKILLS:
+                        continue
+
                 canonical = self.skill_synonyms.get(skill, skill)
+
                 found.add(canonical)
 
         # Also check for multi-word skills with hyphen variations
@@ -251,9 +343,18 @@ class SkillsExtractor:
                 ner_skills.add(text_lower)
             # Check if entity contains a known skill
             for skill in self.all_skills:
-                if skill in text_lower or text_lower in skill:
-                    if len(skill) > 3:  # Avoid short false matches
-                        ner_skills.add(self.skill_synonyms.get(skill, skill))
+
+                skill = skill.lower().strip()
+
+                # Only accept exact NER entity match
+                if text_lower == skill:
+
+                    canonical = self.skill_synonyms.get(
+                        skill,
+                        skill
+                    )
+
+                    ner_skills.add(canonical)
 
         return ner_skills
 

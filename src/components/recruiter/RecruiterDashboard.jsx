@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
@@ -9,8 +10,10 @@ import {
 function RecruiterDashboard() {
 
   const [activeTab, setActiveTab] = React.useState("dashboard");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   /* COMPONENTS */
+  const navigate = useNavigate();
   const StatCard = ({ title, value, extra }) => (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <div className="flex justify-between">
@@ -131,7 +134,10 @@ function RecruiterDashboard() {
             </span>
           </div>
 
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+          <div
+            onClick={() => navigate("/recruiter-dashboard/profile")}
+            className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer"
+          >
             {(
               JSON.parse(localStorage.getItem("user"))?.fullName ||
               "User"
@@ -151,9 +157,12 @@ function RecruiterDashboard() {
               <div className="flex items-center gap-3">
                 <div>
                   <h1 className="text-2xl font-bold">
-                    Welcome back,{" "}
-                    {JSON.parse(localStorage.getItem("user"))?.fullName || "User"}.
+                    Welcome back, {user?.fullName || "Recruiter"}
                   </h1>
+
+                  <p className="text-gray-500 text-sm">
+                    Recruiting for {user?.companyName || "Company"}
+                  </p>
 
                   <p className="text-gray-500 text-sm">
                     Here is what's happening with your placements today.

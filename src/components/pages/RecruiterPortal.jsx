@@ -4,6 +4,7 @@ import RecruiterDashboard from '../recruiter/RecruiterDashboard';
 import PostJob from '../recruiter/PostJob';
 import Sidebar from '../common/Sidebar';
 import CandidateRanking from '../recruiter/CandidateRanking';
+import RecruiterProfile from '../recruiter/RecruiterProfile';
 
 function RecruiterPortal() {
   return (
@@ -17,6 +18,7 @@ function RecruiterPortal() {
           <Route path="jobs" element={<PostJob />} />
           <Route path="candidate" element={<CandidateRanking />} />
           <Route path="analytics" element={<CandidateRanking />} />
+            <Route path="profile" element={<RecruiterProfile/>} />
            </Routes>
 
       </div>

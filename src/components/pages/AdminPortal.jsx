@@ -5,6 +5,7 @@ import AdminDashboard from '../admin/AdminDashboard';
 import Analytics from '../admin/Analytics';
 import JobManagement from '../admin/JobManagement';
 import UserManagement from '../admin/UserManagement';
+import AdminProfile from '../admin/AdminProfile';
 
 function AdminPortal() {
   return (
@@ -17,6 +18,7 @@ function AdminPortal() {
           <Route path="analytics" element={<Analytics/>} />
           <Route path="jobs" element={<JobManagement/>} />
           <Route path="users" element={<UserManagement/>} />
+          <Route path="profile" element={<AdminProfile />} />
            </Routes>
 
       </div>

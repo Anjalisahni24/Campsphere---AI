@@ -3,6 +3,7 @@ import { checkHealth, getModel3Metrics } from "../../api/camspherApi";
 // getModel3Metrics() → shows accuracy/AUC of LR, RF, DT
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -34,6 +35,7 @@ const Badge = ({ text, color }) => (
 /* HEADER */
 
 const Header = () => {
+  const navigate = useNavigate();
   const tabs = ["Network", "Insights", "Calendar"];
   const [active, setActive] = useState("Network");
 
@@ -48,7 +50,10 @@ const Header = () => {
         </h2>
 
         {/* RIGHT */}
-        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer shrink-0">
+        <div
+  onClick={() => navigate("/admin-dashboard/profile")}
+  className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer shrink-0"
+>
           {(
             JSON.parse(localStorage.getItem("user"))?.fullName ||
             "User"

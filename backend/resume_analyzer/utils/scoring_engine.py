@@ -28,12 +28,12 @@ class ResumeScoringEngine:
     def __init__(self):
         # Score weights (must sum to 1.0)
         self.weights = {
-            "skills": 0.25,
-            "projects": 0.20,
-            "experience": 0.20,
-            "education": 0.15,
-            "content_quality": 0.10,
-            "ats_compatibility": 0.10,
+            "skills":0.25,
+            "projects":0.20,
+            "experience":0.20,
+            "education":0.15,
+            "content_quality":0.10,
+            "ats_compatibility":0.10,
         }
 
         # Thresholds
@@ -76,6 +76,29 @@ class ResumeScoringEngine:
         """
         skills_data = analysis_data.get("skills", {})
         content_data = analysis_data.get("content", {})
+        experiences = content_data.get("experience", [])
+        projects = content_data.get("projects", [])
+
+        total_months = self._estimate_total_duration(
+            experiences
+        )
+
+        if (
+            total_months < 12
+            and len(projects)>=2
+        ):
+
+            weights = {
+                "skills":0.30,
+                "projects":0.25,
+                "experience":0.10,
+                "education":0.15,
+                "content_quality":0.10,
+                "ats_compatibility":0.10,
+            }
+
+        else:
+            weights = self.weights
         raw_text = analysis_data.get("raw_text", "")
         word_count = analysis_data.get("word_count", len(raw_text.split()))
 
@@ -89,12 +112,12 @@ class ResumeScoringEngine:
 
         # Weighted overall score
         overall = (
-            skills_score * self.weights["skills"] +
-            projects_score * self.weights["projects"] +
-            experience_score * self.weights["experience"] +
-            education_score * self.weights["education"] +
-            content_quality_score * self.weights["content_quality"] +
-            ats_score * self.weights["ats_compatibility"]
+            skills_score * weights["skills"] +
+            projects_score * weights["projects"] +
+            experience_score * weights["experience"] +
+            education_score * weights["education"] +
+            content_quality_score * weights["content_quality"] +
+            ats_score * weights["ats_compatibility"]
         )
 
         category_scores = {
@@ -111,48 +134,48 @@ class ResumeScoringEngine:
             {
                 "category": "Skills & Technologies",
                 "score": round(skills_score, 1),
-                "weight": f"{int(self.weights['skills'] * 100)}%",
-                "weighted_score": round(skills_score * self.weights["skills"], 1),
+                "weight": f"{int(weights['skills'] * 100)}%",
+                "weighted_score": round(skills_score * weights["skills"], 1),
                 "status": self._get_status(skills_score),
                 "details": skills_details
             },
             {
                 "category": "Projects & Portfolio",
                 "score": round(projects_score, 1),
-                "weight": f"{int(self.weights['projects'] * 100)}%",
-                "weighted_score": round(projects_score * self.weights["projects"], 1),
+                "weight": f"{int(weights['projects'] * 100)}%",
+                "weighted_score": round(projects_score * weights["projects"], 1),
                 "status": self._get_status(projects_score),
                 "details": projects_details
             },
             {
                 "category": "Work Experience",
                 "score": round(experience_score, 1),
-                "weight": f"{int(self.weights['experience'] * 100)}%",
-                "weighted_score": round(experience_score * self.weights["experience"], 1),
+                "weight": f"{int(weights['experience'] * 100)}%",
+                "weighted_score": round(experience_score * weights["experience"], 1),
                 "status": self._get_status(experience_score),
                 "details": exp_details
             },
             {
                 "category": "Education",
                 "score": round(education_score, 1),
-                "weight": f"{int(self.weights['education'] * 100)}%",
-                "weighted_score": round(education_score * self.weights["education"], 1),
+                "weight": f"{int(weights['education'] * 100)}%",
+                "weighted_score": round(education_score * weights["education"], 1),
                 "status": self._get_status(education_score),
                 "details": edu_details
             },
             {
                 "category": "Content Quality",
                 "score": round(content_quality_score, 1),
-                "weight": f"{int(self.weights['content_quality'] * 100)}%",
-                "weighted_score": round(content_quality_score * self.weights["content_quality"], 1),
+                "weight": f"{int(weights['content_quality'] * 100)}%",
+                "weighted_score": round(content_quality_score * weights["content_quality"], 1),
                 "status": self._get_status(content_quality_score),
                 "details": self._get_content_details(word_count)
             },
             {
                 "category": "ATS Compatibility",
                 "score": round(ats_score, 1),
-                "weight": f"{int(self.weights['ats_compatibility'] * 100)}%",
-                "weighted_score": round(ats_score * self.weights["ats_compatibility"], 1),
+                "weight": f"{int(weights['ats_compatibility'] * 100)}%",
+                "weighted_score": round(ats_score * weights["ats_compatibility"], 1),
                 "status": self._get_status(ats_score),
                 "details": self._get_ats_details(ats_score)
             },
@@ -235,7 +258,10 @@ class ResumeScoringEngine:
                 has_urls += 1
 
         unique_tech = len(set(all_tech))
-        tech_score = min(25, unique_tech * 3)
+        tech_score=min(
+            25,
+            (unique_tech/max(1,count))*8
+        )
 
         # Description quality (max 20)
         desc_ratio = has_descriptions / max(1, count)
@@ -260,8 +286,11 @@ class ResumeScoringEngine:
     def _score_experience(self, experiences: List[Dict]) -> tuple[float, Dict]:
         """Score work experience component (0-100)."""
         if not experiences:
-            # Check if this is a fresher resume (no experience expected)
-            return 20.0, {"count": 0, "total_duration": "N/A", "is_fresher": True}  # FIX2: 0 exp != Average
+            return 35.0, {
+                "count":0,
+                "total_duration":"N/A",
+                "is_fresher":True
+            } 
 
         count = len(experiences)
 
@@ -270,14 +299,19 @@ class ResumeScoringEngine:
 
         # Duration estimation score (max 30)
         total_months = self._estimate_total_duration(experiences)
-        if total_months < 6:
-            duration_score = 10
+        if total_months==0:
+            duration_score=18
+        elif total_months < 6:
+            duration_score=20
+
         elif total_months < 12:
-            duration_score = 20
+            duration_score=25
+
         elif total_months < 24:
-            duration_score = 25
+            duration_score=28
+
         else:
-            duration_score = 30
+            duration_score=30
 
         # Role progression (max 20)
         titles = [e.get("title", "") for e in experiences]
@@ -288,7 +322,7 @@ class ResumeScoringEngine:
         for e in experiences:
             all_tech.extend(e.get("technologies", []))
         unique_tech = len(set(all_tech))
-        tech_score = min(20, unique_tech * 2)
+        tech_score=min(20,unique_tech*2)
 
         total = count_score + duration_score + seniority_score + tech_score
 
@@ -386,7 +420,8 @@ class ResumeScoringEngine:
         max_degree_score = 0
         highest_degree = "Unknown"
         for edu in education:
-            degree = edu.get("degree", "").lower().strip()
+            # Safely fetch degree, handling None
+            degree = (edu.get("degree") or "").lower().strip()
             for deg_key, score in degree_scores.items():
                 if deg_key in degree:
                     if score > max_degree_score:
@@ -404,7 +439,8 @@ class ResumeScoringEngine:
         ]
         has_tier1 = False
         for edu in education:
-            inst = edu.get("institution", "").lower()
+            # Safely fetch institution, handling None
+            inst = (edu.get("institution") or "").lower()
             for tier in tier1_keywords:
                 if tier in inst:
                     has_tier1 = True
@@ -496,7 +532,27 @@ class ResumeScoringEngine:
 
         total = (length_score * 0.4 + section_score * 0.3 +
                 contact_score * 0.15 + verb_score * 0.15)
+        achievement_patterns=[
 
+        r'\d+%',
+        r'\d+\+',
+        r'accuracy',
+        r'uptime',
+        r'latency',
+        r'f1',
+        r'reduced',
+        r'increased'
+        ]
+
+        achievement_count=sum(
+            1 for p in achievement_patterns
+            if re.search(p,text,re.I)
+        )
+
+        total+=min(
+            8,
+            achievement_count
+        )
         return min(100, total)
 
     def _get_section_variants(self, section: str) -> List[str]:

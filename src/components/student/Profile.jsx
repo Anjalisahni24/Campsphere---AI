@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import { getStudentProfile } from "../../api/camspherApi";
-import axios from "axios";
-
 import {
   Camera,
   GraduationCap,
@@ -17,42 +14,44 @@ function Profile() {
     fetchProfile();
   }, []);
 
-  const fetchProfile = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/profile");
+ const fetchProfile = async () => {
+  try {
+    const savedProfile = JSON.parse(
+      localStorage.getItem("profile")
+    );
 
-      setProfile(res.data);
-      setDraft(res.data);
-      setSkills(res.data.skills || []);
-    } catch (err) {
-      console.log(err);
+    const localUser =
+      JSON.parse(localStorage.getItem("user")) || {};
 
-      const localUser =
-        JSON.parse(localStorage.getItem("user")) || {};
-
-      const savedProfile =
-        JSON.parse(localStorage.getItem("profile"));
-
-      const fallbackProfile = savedProfile || {
-        name: localUser.fullName || "New User",
-        role: "Student",
-        email: localUser.email || "",
-        phone: "",
-        location: "",
-        bio: "",
-        college: "",
-        degree: "",
-        year: "",
-        cgpa: "",
-        skills: [],
-        projects: [],
-      };
-
-      setProfile(fallbackProfile);
-      setDraft(fallbackProfile);
-      setSkills(fallbackProfile.skills || []);
+    if (savedProfile) {
+      setProfile(savedProfile);
+      setDraft(savedProfile);
+      setSkills(savedProfile.skills || []);
+      return;
     }
-  };
+
+    const fallbackProfile = {
+      name: localUser.fullName || "New User",
+      role: "Student",
+      email: localUser.email || "",
+      phone: "",
+      location: "",
+      bio: "",
+      college: "",
+      degree: "",
+      year: "",
+      cgpa: "",
+      skills: [],
+      projects: [],
+    };
+
+    setProfile(fallbackProfile);
+    setDraft(fallbackProfile);
+    setSkills([]);
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const [editing, setEditing] = useState(false);
 
@@ -80,10 +79,6 @@ function Profile() {
 
     try {
       // Try backend save
-      await axios.put(
-        "http://localhost:5000/api/profile/update",
-        updatedDraft
-      );
     } catch (err) {
       console.log(err);
     }
@@ -158,7 +153,7 @@ function Profile() {
             {/* Avatar */}
             <div className="relative w-20 h-20">
               <div className="w-full h-full rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl">
-                {profile.name?.charAt(0).toUpperCase()}
+                {profile.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
               {editing && (
                 <div className="absolute bottom-0 right-0 bg-blue-600 text-white p-1 rounded-full">
