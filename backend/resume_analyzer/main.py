@@ -27,7 +27,7 @@ from models.resume_analyzer import ResumeAnalyzer
 from utils.job_matcher import JobRecommendationEngine
 from utils.selection_predictor import SelectionPredictor
 from utils.placement_readiness import PlacementReadinessEngine
-
+from services.chat_service import ask_support_bot
 is_windows = platform.system() == "Windows"
 
 ALLOWED_EXTENSIONS = {
@@ -155,6 +155,9 @@ async def log_requests(request, call_next):
 class AnalyzeTextRequest(BaseModel):
     resume_text: str
     user_id: Optional[str] = None
+
+class ChatRequest(BaseModel):
+    message: str
 
 
 class RecommendJobsRequest(BaseModel):
@@ -419,7 +422,26 @@ async def health_check():
         },
         "version": "4.0.0",
     }
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
 
+    try:
+
+        reply = ask_support_bot(
+            req.message
+        )
+
+        return {
+            "success": True,
+            "reply": reply
+        }
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat failed: {str(e)}"
+        )
 
 @app.post("/api/analyze/file")
 async def analyze_file(

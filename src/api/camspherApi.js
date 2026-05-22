@@ -251,6 +251,15 @@ export const getReadinessScore = (data) =>
   });
 
 export const getReadinessDirect = getReadinessScore;
+// ─── AI Support Chat ───────────────────────────
+
+export const chatSupport = (message) =>
+  request("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      message
+    }),
+  });
 
 export const runPipelineFromFile = (file, profile = {}, onProgress) => {
   const formData = new FormData();
