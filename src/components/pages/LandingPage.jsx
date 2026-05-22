@@ -75,13 +75,13 @@ const LandingPage = () => {
 
   const stories = [
     {
-      name: "Priya Sharma",
-      role: "Software Engineer @ Infosys",
+      name: "Mehak Arora",
+      role: "Software Engineer @ Zscaler",
       text: "CampSphere helped me improve my resume and land interviews faster.",
     },
     {
-      name: "Aman Verma",
-      role: "Data Analyst @ TCS",
+      name: "Ahnis Singh",
+      role: "Java Developer @ TCS",
       text: "The AI readiness score showed exactly what skills I needed to improve.",
     },
   ];
