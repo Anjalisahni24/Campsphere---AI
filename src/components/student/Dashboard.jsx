@@ -533,7 +533,26 @@ function Dashboard() {
                     key={index}
                     className="bg-gray-50 border rounded-lg p-3 text-sm"
                   >
-                    {rec}
+                   <div className="flex gap-2 items-center mb-2">
+                    <span className="font-semibold text-red-500">
+                      {rec.priority?.toUpperCase()}
+                    </span>
+
+                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                      {rec.category}
+                    </span>
+
+                   </div>
+
+                   <p>
+                     <strong>Issue:</strong>{" "}
+                     {rec.issue}
+                   </p>
+
+                   <p className="mt-2 text-gray-600">
+                    <strong>Action:</strong>{" "}
+                    {rec.action}
+                   </p>
                   </div>
                 )
               )}
@@ -566,7 +585,12 @@ function Dashboard() {
 
           <div className="mt-2">
             <span className="text-4xl font-bold">
-              {savedProfile.cgpa || "Not added"}
+              {
+              resumeData?.analysis?.education?.[0]?.cgpa ||
+              resumeData?.extraction?.cgpa ||
+              savedProfile?.cgpa ||
+              "Not added"
+              }
             </span>
 
             <span className="text-sm text-gray-500 ml-1">
@@ -584,16 +608,34 @@ function Dashboard() {
           </div>
 
           <div className="flex flex-wrap gap-2 mt-3">
-            {savedProfile.skills?.length > 0 ? (
+            {allSkills.length > 0 ? (
 
-              savedProfile.skills.map((skill) => (
-                <Badge
-                  key={skill}
-                  className="bg-gray-100"
-                >
-                  {skill}
-                </Badge>
-              ))
+            allSkills
+            .filter(skill => skill.length > 3)
+            .filter(skill =>
+            ![
+              "organization",
+              "legal",
+              "medical",
+              "communication",
+              "cross-functional",
+              "benchmarking",
+              "support",
+              "work"
+            ].includes(skill.toLowerCase())
+            )
+            .slice(0,10).map((skill) => (
+
+            <Badge
+                key={skill}
+                className="bg-gray-100"
+            >
+                {skill}
+            </Badge>
+
+            ))
+
+            
 
             ) : (
 

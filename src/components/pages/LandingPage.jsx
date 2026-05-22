@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../common/navbar";
 import AnimatedBackground from "../common/AnimatedBackground";
+import { chatSupport } from "../../api/camspherApi";
 
 
 const LandingPage = () => {
@@ -85,49 +86,51 @@ const LandingPage = () => {
     },
   ];
 
-  const handleSend = () => {
+  const handleSend = async () => {
+
     if (!input.trim()) return;
 
-    const userMessage = {
-      role: "user",
-      text: input,
-    };
-
-    let aiReply =
-      "Focus on improving your resume and technical skills.";
-
-    const text = input.toLowerCase();
-
-    if (text.includes("resume")) {
-      aiReply =
-        "Keep your resume one page, ATS-friendly, and include measurable achievements.";
-    }
-
-    else if (text.includes("interview")) {
-      aiReply =
-        "Practice DSA, projects, and communication for interviews.";
-    }
-
-    else if (text.includes("ats")) {
-      aiReply =
-        "Use keywords from job descriptions to improve ATS scores.";
-    }
-
-    else if (text.includes("placement")) {
-      aiReply =
-        "Maintain CGPA, improve projects, and practice aptitude regularly.";
-    }
+    const userMessage = input;
 
     setMessages((prev) => [
       ...prev,
-      userMessage,
       {
-        role: "assistant",
-        text: aiReply,
+        role: "user",
+        text: userMessage,
       },
     ]);
 
     setInput("");
+
+    try {
+
+      const res = await chatSupport(
+        userMessage
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text:
+            res.reply ||
+            "Sorry, I couldn't respond.",
+        },
+      ]);
+
+    } catch (err) {
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text:
+            "AI assistant unavailable right now.",
+        },
+      ]);
+
+      console.error(err);
+    }
   };
 
   return (

@@ -16,6 +16,7 @@ from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import uvicorn
+import numpy as np
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -26,7 +27,7 @@ from models.resume_analyzer import ResumeAnalyzer
 from utils.job_matcher import JobRecommendationEngine
 from utils.selection_predictor import SelectionPredictor
 from utils.placement_readiness import PlacementReadinessEngine
-
+from services.chat_service import ask_support_bot
 is_windows = platform.system() == "Windows"
 
 ALLOWED_EXTENSIONS = {
@@ -39,6 +40,37 @@ analyzer: Optional[ResumeAnalyzer] = None
 job_engine: Optional[JobRecommendationEngine] = None
 predictor: Optional[SelectionPredictor] = None
 readiness: Optional[PlacementReadinessEngine] = None
+def convert_numpy(obj):
+    """
+    Recursively convert NumPy/scikit-learn values
+    into JSON-safe Python values.
+    """
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, np.integer):
+        return int(obj)
+
+    if isinstance(obj, np.floating):
+        return float(obj)
+
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+
+    if isinstance(obj, dict):
+        return {
+            k: convert_numpy(v)
+            for k, v in obj.items()
+        }
+
+    if isinstance(obj, list):
+        return [
+            convert_numpy(v)
+            for v in obj
+        ]
+
+    return obj
 
 
 @asynccontextmanager
@@ -123,6 +155,9 @@ async def log_requests(request, call_next):
 class AnalyzeTextRequest(BaseModel):
     resume_text: str
     user_id: Optional[str] = None
+
+class ChatRequest(BaseModel):
+    message: str
 
 
 class RecommendJobsRequest(BaseModel):
@@ -313,6 +348,8 @@ def _run_readiness_pipeline(
         model_choice=model_choice,
     )
 
+    prediction = convert_numpy(prediction)
+
     readiness_result = readiness.compute_from_pipeline(
         resume_analysis=resume_result,
         job_recommendations=job_result,
@@ -322,6 +359,8 @@ def _run_readiness_pipeline(
         has_backlogs=has_backlogs,
         mock_test_score=mock_test_score,
     )
+
+    readiness_result = convert_numpy(readiness_result)
 
     total_ms = round((time.time() - start_time) * 1000, 2)
     return _format_readiness_pipeline_response(
@@ -383,7 +422,26 @@ async def health_check():
         },
         "version": "4.0.0",
     }
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
 
+    try:
+
+        reply = ask_support_bot(
+            req.message
+        )
+
+        return {
+            "success": True,
+            "reply": reply
+        }
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat failed: {str(e)}"
+        )
 
 @app.post("/api/analyze/file")
 async def analyze_file(
@@ -397,7 +455,7 @@ async def analyze_file(
     start_time = time.time()
 
     try:
-        print(f"[analyze/file] Request received: {file.filename} ({file.content_type})")
+        print(f"[backend] Request received: {file.filename}")
         contents = await file.read()
         _validate_upload(file, contents)
         print(f"[analyze/file] Analysis started ({len(contents)} bytes)")
@@ -406,6 +464,9 @@ async def analyze_file(
             file.filename,
             content_type=file.content_type,
         )
+        extracted_text_len = result.get("analysis", {}).get("text_stats", {}).get("character_count", 0)
+        print(f"[backend] Extracted text length: {extracted_text_len}")
+        print(f"[backend] Analysis output: {result}")
         result["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
         return result
     except HTTPException:
@@ -644,7 +705,13 @@ async def predict_selection(request: PredictRequest):
             branch=request.branch,
             model_choice=request.model_choice,
         )
-        result["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
+    
+        result["processing_time_ms"] = round(
+            (time.time() - start_time) * 1000,
+            2
+        )
+        result = convert_numpy(result)
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
@@ -680,6 +747,8 @@ async def predict_from_resume(request: FullPipelineRequest):
             has_backlogs=request.has_backlogs,
             model_choice=request.model_choice,
         )
+
+        prediction = convert_numpy(prediction)
 
         return {
             "success": True,
@@ -754,6 +823,8 @@ async def predict_from_file(
             has_backlogs=has_backlogs,
             model_choice=model_choice,
         )
+
+        prediction = convert_numpy(prediction)
         return {
             "success": True,
             "processing_time_ms": round((time.time() - start_time) * 1000, 2),
