@@ -45,7 +45,7 @@ const Button = ({ children, className = "", ...props }) => (
 
 /* Readiness Chart */
 const ReadinessChart = ({ value }) => (
-  <div className="w-24 h-24 rounded-full border-4 border-blue-500 flex items-center justify-center text-lg font-bold text-blue-600">
+  <div className="w-24 h-24 rounded-full border-4 border-blue-500 dark:border-blue-500 flex items-center justify-center text-lg font-bold text-blue-600">
     {value}%
   </div>
 );
@@ -56,17 +56,18 @@ function Dashboard() {
   const savedProfile =
     JSON.parse(localStorage.getItem("profile") || "{}");
 
-  const {
-    resumeData,
-    jobData,
-    prediction,
-    readiness,
-    loading,
-    error,
-    progress,
-    runPipeline,
-    getAtsScore,
-  } = usePlacement();
+const {
+  resumeData,
+  jobData,
+  prediction,
+  readiness,
+  loading,
+  error,
+  progress,
+  runPipeline,
+  getAtsScore,
+  resetAnalysis,
+} = usePlacement();
 
   const readinessScore = readiness?.readiness_score ?? Math.min(
     (savedProfile.skills?.length || 0) * 10 +
@@ -182,8 +183,43 @@ function Dashboard() {
     }
 
     try {
-      await runPipeline(file);
-      toast.success("Full AI analysis complete!");
+     const result = await runPipeline(file);
+
+localStorage.setItem(
+  "profile",
+  JSON.stringify({
+    name:
+      JSON.parse(localStorage.getItem("user"))
+        ?.fullName || "User",
+
+    role: "Student",
+
+    skills:
+      result?.resumeData?.analysis?.skills
+        ?.found_skills || [],
+
+    college:
+      result?.resumeData?.analysis?.content
+        ?.education?.[0]?.institution || "",
+
+    degree:
+      result?.resumeData?.analysis?.content
+        ?.education?.[0]?.degree || "",
+
+    year:
+      result?.resumeData?.analysis?.content
+        ?.education?.[0]?.duration || "",
+
+    projects:
+      result?.resumeData?.analysis?.content
+        ?.projects?.map((p) => ({
+          title: p.name,
+          description: p.description,
+        })) || [],
+  })
+);
+/*  */
+toast.success("Full AI analysis complete!");
     } catch (err) {
       toast.error(err.message || "Analysis failed. Is the backend running?");
     } finally {
@@ -192,12 +228,12 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-6 space-y-5 bg-gradient-to-br from-[#eef2ff]">
+    <div className="min-h-screen p-6 space-y-5 bg-gradient-to-br from-[#eef2ff] dark:from-gray-950 dark:to-black dark:text-white">
 
       {/* HEADER */}
-      <div className="bg-white border rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
+      <div className="bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
 
-        <h2 className="text-lg font-semibold text-gray-800">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
           {title}
         </h2>
 
@@ -211,13 +247,13 @@ function Dashboard() {
                 setShowNotifications(!showNotifications);
                 setShowSettings(false);
               }}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Bell size={18} />
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white border rounded-2xl shadow-lg p-4 z-50">
+              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-2xl shadow-lg p-4 z-50">
                 <h4 className="font-semibold mb-3">
                   Notifications
                 </h4>
@@ -228,7 +264,7 @@ function Dashboard() {
                     (notification, index) => (
                       <div
                         key={index}
-                        className="border-b pb-2 last:border-none"
+                        className="border-b dark:border-gray-700 pb-2 last:border-none"
                       >
                         {notification}
                       </div>
@@ -246,19 +282,19 @@ function Dashboard() {
                 setShowSettings(!showSettings);
                 setShowNotifications(false);
               }}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <Settings size={18} />
             </button>
 
             {showSettings && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border rounded-2xl shadow-lg p-2 z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-2xl shadow-lg p-2 z-50">
 
                 <button
                   onClick={() =>
                     navigate("/student-dashboard/profile")
                   }
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
                 >
                   Profile Settings
                 </button>
@@ -267,7 +303,7 @@ function Dashboard() {
                   onClick={() =>
                     navigate("/student-dashboard/readiness-score")
                   }
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
                 >
                   Readiness Analytics
                 </button>
@@ -288,7 +324,7 @@ function Dashboard() {
                     localStorage.removeItem("user");
                     navigate("/login");
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-red-500"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm text-red-500"
                 >
                   Logout
                 </button>
@@ -313,18 +349,20 @@ function Dashboard() {
       <div className="flex items-center justify-between flex-wrap gap-4">
 
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
             Welcome back,{" "}
             {user?.fullName || "User"}
           </h1>
 
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
             Your placement journey is getting smarter with AI.
           </p>
         </div>
 
         <div
-          className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-2 border-dashed rounded-xl p-4 transition ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
+          className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-2 border-dashed rounded-xl p-4 transition ${dragOver
+  ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
             }`}
           onDragOver={(e) => {
             e.preventDefault();
@@ -345,7 +383,7 @@ function Dashboard() {
             className="hidden"
             onChange={handleFileChange}
           />
-          <p className="text-sm text-gray-500 flex-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 flex-1">
             Drop resume here or browse — PDF, scanned PDF, DOC, DOCX, JPG, PNG, WEBP
           </p>
           <Button
@@ -356,11 +394,27 @@ function Dashboard() {
             <Upload size={18} />
             {loading ? progress.message || "Processing…" : "Upload Resume"}
           </Button>
+          {resumeData && (
+            <Button
+              onClick={() => {
+                resetAnalysis();
+
+                localStorage.removeItem("profile");
+
+                toast.success("Previous analysis cleared");
+
+                fileInputRef.current.click();
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-3"
+            >
+              Re-upload Resume
+            </Button>
+          )}
         </div>
       </div>
 
       {loading && (
-        <div className="bg-white rounded-2xl border p-4 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border dark:border-gray-700 p-4 shadow-sm">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-gray-600">{progress.message || "Processing…"}</span>
             <span className="font-semibold text-blue-600">{progress.percent}%</span>
@@ -375,7 +429,7 @@ function Dashboard() {
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3 text-red-700 text-sm">
+        <div className="bg-red-50 border dark:border-gray-700 border-red-200 rounded-2xl p-4 flex gap-3 text-red-700 text-sm">
           <AlertCircle size={20} className="shrink-0" />
           <div>
             <p className="font-semibold">Analysis error</p>
@@ -408,8 +462,8 @@ function Dashboard() {
             { label: "Placement Odds", value: placementProb != null ? `${Math.round(placementProb)}%` : "—", color: "text-violet-600" },
             { label: "Readiness", value: readiness?.readiness_score != null ? Math.round(readiness.readiness_score) : "—", color: "text-indigo-600" },
           ].map((card) => (
-            <div key={card.label} className="bg-white rounded-2xl border p-4 shadow-sm">
-              <p className="text-xs text-gray-500 uppercase">{card.label}</p>
+            <div key={card.label} className="bg-white dark:bg-gray-900 rounded-2xl border p-4 shadow-sm">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">{card.label}</p>
               <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
             </div>
           ))}
@@ -418,12 +472,12 @@ function Dashboard() {
 
       {/* Resume Analysis Result */}
       {resumeData && (
-        <div className="bg-white rounded-2xl shadow border p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow border dark:border-gray-700 p-6">
 
           <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
             <h2 className="text-2xl font-bold">Resume Analysis</h2>
             {resumeData.extraction && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+              <span className="text-xs bg-gray-100 dark:bg-gray-800 dark:text-gray-200 text-gray-600 px-3 py-1 rounded-full">
                 {resumeData.extraction.extraction_method_used} ·{" "}
                 {resumeData.extraction.confidence_score}% confidence
               </span>
@@ -432,8 +486,8 @@ function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
 
-            <div className="bg-blue-50 rounded-xl p-4">
-              <p className="text-sm text-gray-500">
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Resume Score
               </p>
 
@@ -442,8 +496,8 @@ function Dashboard() {
               </h3>
             </div>
 
-            <div className="bg-green-50 rounded-xl p-4">
-              <p className="text-sm text-gray-500">
+            <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Grade
               </p>
 
@@ -452,8 +506,8 @@ function Dashboard() {
               </h3>
             </div>
 
-            <div className="bg-purple-50 rounded-xl p-4">
-              <p className="text-sm text-gray-500">
+            <div className="bg-purple-50 dark:bg-purple-950/30 rounded-xl p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Skills Found
               </p>
 
@@ -462,8 +516,8 @@ function Dashboard() {
               </h3>
             </div>
 
-            <div className="bg-orange-50 rounded-xl p-4">
-              <p className="text-sm text-gray-500">
+            <div className="bg-orange-50 dark:bg-orange-950/30 rounded-xl p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Projects
               </p>
 
@@ -500,8 +554,8 @@ function Dashboard() {
           {scoreChartData.length > 0 && (
             <div className="mt-6">
               <h3 className="font-semibold text-lg mb-3">Score Breakdown</h3>
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full min-h-[300px]">
+  <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={scoreChartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" domain={[0, 100]} />
@@ -531,28 +585,28 @@ function Dashboard() {
                 (rec, index) => (
                   <div
                     key={index}
-                    className="bg-gray-50 border rounded-lg p-3 text-sm"
+                    className="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 text-sm"
                   >
-                   <div className="flex gap-2 items-center mb-2">
-                    <span className="font-semibold text-red-500">
-                      {rec.priority?.toUpperCase()}
-                    </span>
+                    <div className="flex gap-2 items-center mb-2">
+                      <span className="font-semibold text-red-500">
+                        {rec.priority?.toUpperCase()}
+                      </span>
 
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                      {rec.category}
-                    </span>
+                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                        {rec.category}
+                      </span>
 
-                   </div>
+                    </div>
 
-                   <p>
-                     <strong>Issue:</strong>{" "}
-                     {rec.issue}
-                   </p>
+                    <p>
+                      <strong>Issue:</strong>{" "}
+                      {rec.issue}
+                    </p>
 
-                   <p className="mt-2 text-gray-600">
-                    <strong>Action:</strong>{" "}
-                    {rec.action}
-                   </p>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300">
+                      <strong>Action:</strong>{" "}
+                      {rec.action}
+                    </p>
                   </div>
                 )
               )}
@@ -566,7 +620,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
         {/* Readiness */}
-        <div className="bg-white rounded-2xl p-5 shadow border flex flex-col items-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow border dark:border-gray-700 flex flex-col items-center">
 
           <ReadinessChart value={Math.min(Math.round(readinessScore), 100)} />
 
@@ -576,9 +630,9 @@ function Dashboard() {
         </div>
 
         {/* Academic */}
-        <div className="bg-white rounded-2xl p-5 shadow border">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow border dark:border-gray-700">
 
-          <div className="flex items-center gap-2 text-gray-500 text-xs uppercase">
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs uppercase">
             <GraduationCap size={18} />
             Academic Standing
           </div>
@@ -586,23 +640,23 @@ function Dashboard() {
           <div className="mt-2">
             <span className="text-4xl font-bold">
               {
-              resumeData?.analysis?.education?.[0]?.cgpa ||
-              resumeData?.extraction?.cgpa ||
-              savedProfile?.cgpa ||
-              "Not added"
+                resumeData?.analysis?.education?.[0]?.cgpa ||
+                resumeData?.extraction?.cgpa ||
+                savedProfile?.cgpa ||
+                "Not added"
               }
             </span>
 
-            <span className="text-sm text-gray-500 ml-1">
+            <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
               / 10.0 CGPA
             </span>
           </div>
         </div>
 
         {/* Skills */}
-        <div className="bg-white rounded-2xl p-5 shadow border">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow border dark:border-gray-700">
 
-          <div className="flex items-center gap-2 text-gray-500 text-xs uppercase">
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs uppercase">
             <Sparkles size={18} />
             Core Competencies
           </div>
@@ -610,36 +664,36 @@ function Dashboard() {
           <div className="flex flex-wrap gap-2 mt-3">
             {allSkills.length > 0 ? (
 
-            allSkills
-            .filter(skill => skill.length > 3)
-            .filter(skill =>
-            ![
-              "organization",
-              "legal",
-              "medical",
-              "communication",
-              "cross-functional",
-              "benchmarking",
-              "support",
-              "work"
-            ].includes(skill.toLowerCase())
-            )
-            .slice(0,10).map((skill) => (
+              allSkills
+                .filter(skill => skill.length > 3)
+                .filter(skill =>
+                  ![
+                    "organization",
+                    "legal",
+                    "medical",
+                    "communication",
+                    "cross-functional",
+                    "benchmarking",
+                    "support",
+                    "work"
+                  ].includes(skill.toLowerCase())
+                )
+                .slice(0, 10).map((skill) => (
 
-            <Badge
-                key={skill}
-                className="bg-gray-100"
-            >
-                {skill}
-            </Badge>
+                  <Badge
+                    key={skill}
+                    className="bg-gray-100 dark:bg-gray-800 dark:text-gray-200"
+                  >
+                    {skill}
+                  </Badge>
 
-            ))
+                ))
 
-            
+
 
             ) : (
 
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 No skills added yet
               </p>
             )}
@@ -649,7 +703,7 @@ function Dashboard() {
       </div>
 
       {/* Skills Bar */}
-      <div className="bg-white rounded-2xl p-5 shadow border">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow border dark:border-gray-700">
 
         <h3 className="font-semibold mb-4">
           Skill Analysis
@@ -657,7 +711,7 @@ function Dashboard() {
 
         {dynamicSkills.length === 0 ? (
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Upload resume or add skills in profile
           </p>
 
@@ -690,7 +744,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
 
         {/* Applications */}
-        <div className="md:col-span-3 bg-white p-5 rounded-2xl shadow border">
+        <div className="md:col-span-3 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow border dark:border-gray-700">
 
           <h3 className="font-semibold mb-4">
             Applied Jobs
@@ -703,7 +757,7 @@ function Dashboard() {
               return (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition"
                 >
                   <Terminal />
 
@@ -713,7 +767,7 @@ function Dashboard() {
                       {job.title || "Job Role"}
                     </p>
 
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {job.company || "Company"}
                     </p>
 
@@ -728,7 +782,7 @@ function Dashboard() {
 
           ) : (
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               No job applications yet
             </p>
 
@@ -739,7 +793,7 @@ function Dashboard() {
         {/* Upcoming */}
         <div className="md:col-span-2 space-y-3">
 
-          <div className="bg-white shadow border p-4 rounded-2xl font-bold">
+          <div className="bg-white dark:bg-gray-900 shadow border dark:border-gray-700 p-4 rounded-2xl font-bold">
             Career Activities
           </div>
 
@@ -759,7 +813,7 @@ function Dashboard() {
 
             <div
               key={item}
-              className="bg-white p-4 rounded-2xl shadow border flex justify-between hover:bg-blue-600 hover:text-white transition cursor-pointer"
+              className="bg-white dark:bg-gray-900 p-4 rounded-2xl shadow border dark:border-gray-700 flex justify-between hover:bg-blue-600 hover:text-white transition cursor-pointer"
             >
               <p>{item}</p>
               <ChevronRight />

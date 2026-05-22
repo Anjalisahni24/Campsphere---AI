@@ -17,6 +17,13 @@ export function usePlacement() {
 
 export function PlacementProvider({ children }) {
   const [resumeData, setResumeData] = useState(null);
+  const resetAnalysis = () => {
+  setResumeData(null);
+  setJobData(null);
+  setPrediction(null);
+  setReadiness(null);
+  setError(null);
+};
   const [jobData, setJobData] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [readiness, setReadiness] = useState(null);
@@ -104,6 +111,7 @@ export function PlacementProvider({ children }) {
     runPipeline,
     clearPipeline,
     getAtsScore,
+    resetAnalysis,
     hasResults: Boolean(resumeData),
   };
 
